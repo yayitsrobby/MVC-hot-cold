@@ -4,7 +4,6 @@ var Model = function () {
   this.randomNum;
   this.guessCount = 0;
   this.prevUserGuess = 0;
-  this.prevDiff;
 };
 
 Model.prototype.generateRandomNum = function (maxNum) { // maxNum would come from View
@@ -17,12 +16,21 @@ Model.prototype.resetGame = function () {
 };
 
 Model.prototype.getCurrentDiff = function (userGuess) {
-  return Math.abs(userGuess - this.randomNum);
+  var difference = Math.abs(userGuess - this.randomNum);
+
+  if (difference >= 50) {
+    return 'Ice Cold!';
+  } else if (difference >= 30) {
+    return 'Cold';
+  } else if (difference >= 10) {
+    return 'Warm';
+  } else if (difference >= 1) {
+    return 'Very HOT!';
+  } else {
+    return 'You got it!';
+  }
 };
 
-Model.prototype.getPrevDiff = function () {
-
-};
 
 // REST IS VIEW
 function generateRandomNum() {
@@ -72,104 +80,83 @@ $(document).ready(function () {
     $('#guessList').append('<li>' + user + '</li>');
   }
 
-  // COMPARES NUMBER TO GENERATED NUMBER AND GIVES FEEDBACK
-  function compareNumFirst(user, random) {
-    //MODEL
-    var difference = Math.abs(user - random);
-    // determines how hot/cold the number is
+}
+//// COMPARES NUMBER TO PREVIOUS GUESS AND GIVES SECONDARY FEEDBACK
+//function compareNumRest(currentNum, oldNum, randNum) {
+//  // checks how far guess is from generated number
+//  var currentDiff = Math.abs(currentNum - randNum);
+//
+//  // checks how far previous guess is from generated number
+//  var oldNewDiff = Math.abs(oldNum - randNum);
+//
+//  // compares two numbers and provides feedback
+//  if (currentDiff > oldNewDiff) {
+//    $('#relative-feedback').text('Colder');
+//  } else if (currentDiff < oldNewDiff) {
+//    $('#relative-feedback').text('Warmer');
+//    $('#guessList li').last().addClass('warmer');
+//  } else {
+//    $('#relative-feedback').text('No change');
+//  }
+//}
 
-    //VIEW
-    if (difference >= 50) {
-      $('#feedback').text('Ice Cold!');
-    } else if (difference >= 30) {
-      $('#feedback').text('Cold');
-    } else if (difference >= 10) {
-      $('#feedback').text('Warm');
-      $('#guessList li').last();
-    } else if (difference >= 1) {
-      $('#feedback').text('Very HOT!');
-      $('#guessList li').last();
+
+/*------------------ CODE BODY ------------------*/
+
+/*--- Display information modal box ---*/
+$('.what').click(function () {
+  $('.overlay').fadeIn(1000);
+
+});
+/*--- Hide information modal box ---*/
+$('a.close').click(function () {
+  $('.overlay').fadeOut(1000);
+});
+
+// STARTS THE GAME
+newGame();
+
+// WAITS FOR GUESS BUTTON TO BE CLICKED
+$('form').submit(function () {
+  event.preventDefault();
+
+  // assigns and parses the inputed guess
+  var userGuess = parseInt($('#userGuess').val()); //model
+
+  // determines if input is a number and in the right range
+  if (!(isNaN(userGuess)) && userGuess > 0 && userGuess <= input) { // VIEW
+
+    // function to track all guesses
+    guessList(userGuess); // VIEW
+
+    // if its the first guess runs the initial compare
+    if (guessCount === 0) {
+      compareNumFirst(userGuess, randomNum);
     } else {
-      $('#feedback').text('You got it!');
-      $('#guessList li').last().addClass('winner');
+      compareNumFirst(userGuess, randomNum);
+      compareNumRest(userGuess, prevUserGuess, randomNum);
     }
+
+    // sets the number of guesses
+    guessCount++;
+    $('#count').text(guessCount);
+
+    // clears the input field
+    $('#userGuess').val('');
+
+    // logs the guess as the 'previous' guess
+    prevUserGuess = userGuess;
+  } else { // if not a number, prompts to enter a number
+    $('#userGuess').val('');
+    alert('Please enter a valid number.');
   }
-  // COMPARES NUMBER TO PREVIOUS GUESS AND GIVES SECONDARY FEEDBACK
-  function compareNumRest(currentNum, oldNum, randNum) {
-    // checks how far guess is from generated number
-    var currentDiff = Math.abs(currentNum - randNum);
+});
 
-    // checks how far previous guess is from generated number
-    var oldNewDiff = Math.abs(oldNum - randNum);
-
-    // compares two numbers and provides feedback
-    if (currentDiff > oldNewDiff) {
-      $('#relative-feedback').text('Colder');
-    } else if (currentDiff < oldNewDiff) {
-      $('#relative-feedback').text('Warmer');
-      $('#guessList li').last().addClass('warmer');
-    } else {
-      $('#relative-feedback').text('No change');
-    }
-  }
-
-
-  /*------------------ CODE BODY ------------------*/
-
-  /*--- Display information modal box ---*/
-  $('.what').click(function () {
-    $('.overlay').fadeIn(1000);
-
-  });
-  /*--- Hide information modal box ---*/
-  $('a.close').click(function () {
-    $('.overlay').fadeOut(1000);
-  });
-
-  // STARTS THE GAME
+// WAITS FOR NEW GAME TO BE CLICKED TO RESET THE GAME
+$('.new').click(function () {
+  // completely resets the game
+  guessCount = 0;
   newGame();
-
-  // WAITS FOR GUESS BUTTON TO BE CLICKED
-  $('form').submit(function () {
-    event.preventDefault();
-
-    // assigns and parses the inputed guess
-    var userGuess = parseInt($('#userGuess').val());
-
-    // determines if input is a number and in the right range
-    if (!(isNaN(userGuess)) && userGuess > 0 && userGuess <= input) {
-
-      // function to track all guesses
-      guessList(userGuess);
-
-      // if its the first guess runs the initial compare
-      if (guessCount === 0) {
-        compareNumFirst(userGuess, randomNum);
-      } else {
-        compareNumFirst(userGuess, randomNum);
-        compareNumRest(userGuess, prevUserGuess, randomNum);
-      }
-
-      // sets the number of guesses
-      guessCount++;
-      $('#count').text(guessCount);
-
-      // clears the input field
-      $('#userGuess').val('');
-
-      // logs the guess as the 'previous' guess
-      prevUserGuess = userGuess;
-    } else { // if not a number, prompts to enter a number
-      $('#userGuess').val('');
-      alert('Please enter a valid number.');
-    }
-  });
-
-  // WAITS FOR NEW GAME TO BE CLICKED TO RESET THE GAME
-  $('.new').click(function () {
-    // completely resets the game
-    guessCount = 0;
-    newGame();
-  });
+});
 
 });
