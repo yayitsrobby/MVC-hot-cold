@@ -1,22 +1,21 @@
 /*------------------ MODEL ------------------*/
-var Model = function() {
+var Model = function () {
   this.randomNum;
   this.maxNum;
   this.guessCount = 0;
-  this.prevUserGuess = 0;
 };
 
-Model.prototype.generateRandomNum = function(maxNum) { // maxNum would come from View
+Model.prototype.generateRandomNum = function (maxNum) { // maxNum would come from View
   this.maxNum = maxNum;
   this.randomNum = Math.floor((Math.random() * this.maxNum) + 1);
 };
 
-Model.prototype.resetGame = function() {
+Model.prototype.resetGame = function () {
   this.guessCount = 0;
   this.prevUserGuess = 0;
 };
 
-Model.prototype.getCurrentDiff = function(userGuess) {
+Model.prototype.getCurrentDiff = function (userGuess) {
   var difference = Math.abs(userGuess - this.randomNum);
 
   if (difference >= 50) {
@@ -32,8 +31,12 @@ Model.prototype.getCurrentDiff = function(userGuess) {
   }
 };
 
+Model.prototype.incGuessCount = function () {
+  this.guessCount++;
+};
+
 /*------------------ VIEW ------------------*/
-var View = function() {
+var View = function () {
   this.guessList = $('#guessList');
   this.guessCount = $('#count');
   this.userGuess = $('#userGuess');
@@ -45,33 +48,42 @@ var View = function() {
   this.overlay = $('.overlay');
   this.navClose = $('.close');
   this.form = $('form');
+  this.newButton = $('.new');
 
-  this.navWhat.click(function() {
-    this.overlay.fadeIn(1000);
+  this.navWhat.click(function () {
+    console.log($('.overlay'));
+    $('.overlay').fadeIn(1000);
   });
 
   /*--- Hide information modal box ---*/
-  this.navClose.click(function() {
+  this.navClose.click(function () {
     this.overlay.fadeOut(1000);
   });
 
   this.form.submit(this.answerSubmitted);
+  this.newButton.click(this.newGame);
 
   this.onChange = null;
+  this.onNew = null;
 };
 
-View.prototype.answerSubmitted = function() {
+View.prototype.newGame = function () {
+  if (this.onNew) {
+    this.onNew();
+  }
+};
+
+View.prototype.answerSubmitted = function () {
   event.preventDefault();
   // assigns and parses the inputed guess
   var userGuess = parseInt(this.userGuess.val()); //model
 
-  if(onChange) {
+  if (onChange) {
     onChange(userGuess);
   }
 };
 
-
-View.prototype.onLoad = function() {
+View.prototype.onLoad = function () {
   var input;
   //prompts for a ceiling number
   while (true) {
@@ -86,11 +98,11 @@ View.prototype.onLoad = function() {
 };
 
 // ADDS LIST ELEMENTS TO #GUESSLIST
-View.prototype.appendGuessList = function(user) {
+View.prototype.appendGuessList = function (user) {
   this.guessList.append('<li>' + user + '</li>');
 };
 
-View.prototype.reset = function() {
+View.prototype.reset = function () {
   this.guessList.empty();
   this.count.text(guessCount);
   this.userGuess.val('');
@@ -98,11 +110,24 @@ View.prototype.reset = function() {
   this.guessRange.remove();
 };
 
+View.prototype.enterValidNum = function () {
+  this.userGuess.val('');
+  alert('Please enter a valid number');
+}
+
+View.prototype.guessPassed = function (count) {
+  this.guessCount.text(count);
+  this.userGuess.val('');
+}
+
 var Controller = function (view, model) {
   this.view = view;
   this.model = model;
 
   this.view.onChange = this.guessEntered.bind(this);
+  this.view.onNew = this.restartGame.bind(this);
+
+  this.model.generateRandomNum(this.view.onLoad());
 };
 
 Controller.prototype.guessEntered = function (userGuess) {
@@ -110,81 +135,34 @@ Controller.prototype.guessEntered = function (userGuess) {
   if (!(isNaN(userGuess)) && userGuess > 0 && this.model.maxNum) { // VIEW
 
     // function to track all guesses
-    guessList(userGuess); // VIEW
+    this.view.appendGuessList(userGuess);
 
-    // if its the first guess runs the initial compare
-    if (guessCount === 0) {
-      compareNumFirst(userGuess, randomNum);
-    } else {
-      compareNumFirst(userGuess, randomNum);
-      compareNumRest(userGuess, prevUserGuess, randomNum);
-    }
+    // function to provide feedback
+    this.view.feedback.text(this.model.getCurrentDiff(userGuess));
 
     // sets the number of guesses
-    guessCount++;
-    $('#count').text(guessCount);
+    this.model.incGuessCount();
 
-    // clears the input field
-    $('#userGuess').val('');
+    this.view.guessPassed(this.model.guessCount);
 
     // logs the guess as the 'previous' guess
-    prevUserGuess = userGuess;
   } else { // if not a number, prompts to enter a number
-    $('#userGuess').val('');
-    alert('Please enter a valid number.');
+    this.view.enterValidNum();
   }
-});
 };
 
-// REST IS VIEW
-// function generateRandomNum() {
-//   // prompts for a ceiling number
-//   while (true) { // VIEW
-//     input = parseInt(prompt('Pick a number, any number!'))
-//     if (input > 1) {
-//       break;
-//     }
-//   }
+Controller.prototype.restartGame = function () {
+  this.model.resetGame();
+  this.view.reset();
+};
+
+$(document).ready(function () {
+  var model = new Model();
+  var view = new View();
+  var controller = new Controller(view, model);
+});
 
 
-//   // adds a header telling them the range --- VIEW
-//   $('header').append('<h3 id="guessRange">Guess a number between 1 and ' + input);
-
-//   // adds the ceiling number to the instructions html
-//   $('#maxNum').text(input); // VIEW
-//   return number;
-// }
-
-
-// $(document).ready(function () {
-//   //  /*------------------ VARIABLES ------------------*/
-//   //  var maxNumber;
-//   //  var randomNum;
-//   //  var guessCount = 0;
-//   //  var prevUserGuess = 0;
-
-//   /*------------------ FUNCTIONS ------------------*/
-
-//   // STARTS A BRAND NEW GAME
-//   function newGame() {
-//     randomNum = generateRandomNum(); // model
-//     $('#guessList').empty();
-//     $('#count').text(guessCount);
-//     $('#userGuess').val('');
-//     $('#feedback').text('Make your Guess!');
-//     $('#relative-feedback').text('');
-//     $('#guessRange').remove();
-//   }
-
-//   // GENERATES A RANDOM NUMBER FROM 1 TO USER INPUT
-
-
-//   // ADDS LIST ELEMENTS TO #GUESSLIST
-//   function guessList(user) {
-//     $('#guessList').append('<li>' + user + '</li>');
-//   }
-
-// }
 // //// COMPARES NUMBER TO PREVIOUS GUESS AND GIVES SECONDARY FEEDBACK
 // //function compareNumRest(currentNum, oldNum, randNum) {
 // //  // checks how far guess is from generated number
@@ -205,56 +183,8 @@ Controller.prototype.guessEntered = function (userGuess) {
 // //}
 
 
-// /*------------------ CODE BODY ------------------*/
-
-// /*--- Display information modal box ---*/
-// $('.what').click(function () {
-//   $('.overlay').fadeIn(1000);
-
-// });
-// /*--- Hide information modal box ---*/
-// $('a.close').click(function () {
-//   $('.overlay').fadeOut(1000);
-// });
-
 // // STARTS THE GAME
 // newGame();
-
-// // WAITS FOR GUESS BUTTON TO BE CLICKED
-// $('form').submit(function () {
-//   event.preventDefault();
-
-//   // assigns and parses the inputed guess
-//   var userGuess = parseInt($('#userGuess').val()); //model
-
-//   // determines if input is a number and in the right range
-//   if (!(isNaN(userGuess)) && userGuess > 0 && userGuess <= input) { // VIEW
-
-//     // function to track all guesses
-//     guessList(userGuess); // VIEW
-
-//     // if its the first guess runs the initial compare
-//     if (guessCount === 0) {
-//       compareNumFirst(userGuess, randomNum);
-//     } else {
-//       compareNumFirst(userGuess, randomNum);
-//       compareNumRest(userGuess, prevUserGuess, randomNum);
-//     }
-
-//     // sets the number of guesses
-//     guessCount++;
-//     $('#count').text(guessCount);
-
-//     // clears the input field
-//     $('#userGuess').val('');
-
-//     // logs the guess as the 'previous' guess
-//     prevUserGuess = userGuess;
-//   } else { // if not a number, prompts to enter a number
-//     $('#userGuess').val('');
-//     alert('Please enter a valid number.');
-//   }
-// });
 
 // // WAITS FOR NEW GAME TO BE CLICKED TO RESET THE GAME
 // $('.new').click(function () {
