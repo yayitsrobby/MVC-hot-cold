@@ -2,6 +2,7 @@
 var Model = function () {
   this.randomNum;
   this.maxNum;
+  this.prevGuess;
   this.guessCount = 0;
 };
 
@@ -14,7 +15,32 @@ Model.prototype.resetGame = function () {
   this.guessCount = 0;
 };
 
-Model.prototype.getCurrentDiff = function (userGuess) {
+Model.prototype.userFeedback = function (currentGuess) {
+  return {
+    feedback: this.compareFirst(currentGuess), 
+    relativeFeedback: (this.guessCount ? this.compareNumRest(currentGuess) : ''), 
+  };
+};
+
+// COMPARES NUMBER TO PREVIOUS GUESS AND GIVES SECONDARY FEEDBACK
+Model.prototype.compareNumRest = function (currentGuess) {
+ // checks how far guess is from generated number
+ var currentDiff = Math.abs(currentGuess - this.randomNum);
+
+ // checks how far previous guess is from generated number
+ var oldNewDiff = Math.abs(this.prevGuess - this.randomNum);
+
+ // compares two numbers and provides feedback
+ if (currentDiff > oldNewDiff) {
+   return 'Colder';
+ } else if (currentDiff < oldNewDiff) {
+   return 'Warmer';
+ } else {
+   return 'No change';
+ }
+};
+
+Model.prototype.compareFirst = function (userGuess) {
   var difference = Math.abs(userGuess - this.randomNum);
 
   if (difference >= 50) {
@@ -40,6 +66,7 @@ var View = function () {
   this.guessCount = $('#count');
   this.userGuess = $('#userGuess');
   this.feedback = $('#feedback');
+  this.relativeFeedback = $('#relative-feedback');
   this.guessRange = $('#guessRange');
   this.header = $('header');
   this.maxNum = $('#maxNum');
@@ -111,12 +138,12 @@ View.prototype.reset = function () {
 View.prototype.enterValidNum = function () {
   this.userGuess.val('');
   alert('Please enter a valid number');
-}
+};
 
 View.prototype.guessPassed = function (count) {
   this.guessCount.text(count);
   this.userGuess.val('');
-}
+};
 
 var Controller = function (view, model) {
   this.view = view;
@@ -136,10 +163,13 @@ Controller.prototype.guessEntered = function (userGuess) {
     this.view.appendGuessList(userGuess);
 
     // function to provide feedback
-    this.view.feedback.text(this.model.getCurrentDiff(userGuess));
+    var feedBackObj = this.model.userFeedback(userGuess);
+    this.view.feedback.text(feedBackObj.feedback);
+    this.view.relativeFeedback.text(feedBackObj.relativeFeedback);
 
     // sets the number of guesses
     this.model.incGuessCount();
+    this.model.prevGuess = userGuess;
 
     this.view.guessPassed(this.model.guessCount);
 
