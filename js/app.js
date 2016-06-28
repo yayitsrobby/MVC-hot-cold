@@ -12,7 +12,6 @@ Model.prototype.generateRandomNum = function (maxNum) { // maxNum would come fro
 
 Model.prototype.resetGame = function () {
   this.guessCount = 0;
-  this.prevUserGuess = 0;
 };
 
 Model.prototype.getCurrentDiff = function (userGuess) {
@@ -51,17 +50,16 @@ var View = function () {
   this.newButton = $('.new');
 
   this.navWhat.click(function () {
-    console.log($('.overlay'));
-    $('.overlay').fadeIn(1000);
-  });
+    this.overlay.fadeIn(1000);
+  }.bind(this));
 
   /*--- Hide information modal box ---*/
   this.navClose.click(function () {
     this.overlay.fadeOut(1000);
-  });
+  }.bind(this));
 
-  this.form.submit(this.answerSubmitted);
-  this.newButton.click(this.newGame);
+  this.form.submit(this.answerSubmitted.bind(this));
+  this.newButton.click(this.newGame.bind(this));
 
   this.onChange = null;
   this.onNew = null;
@@ -78,8 +76,8 @@ View.prototype.answerSubmitted = function () {
   // assigns and parses the inputed guess
   var userGuess = parseInt(this.userGuess.val()); //model
 
-  if (onChange) {
-    onChange(userGuess);
+  if (this.onChange) {
+    this.onChange(userGuess);
   }
 };
 
@@ -89,7 +87,7 @@ View.prototype.onLoad = function () {
   while (true) {
     input = parseInt(prompt('Pick a number, any number!'));
     if (input > 1) {
-      this.header.append('<h3 id="guessRange">Guess a number between 1 and ' + input);
+      this.guessRange.text('Guess a number between 1 and ' + input);
       // adds the ceiling number to the instructions html
       this.maxNum.text(input); // VIEW
       return input;
@@ -104,10 +102,10 @@ View.prototype.appendGuessList = function (user) {
 
 View.prototype.reset = function () {
   this.guessList.empty();
-  this.count.text(guessCount);
+  this.guessCount.text('0');
   this.userGuess.val('');
   this.feedback.text('Make your Guess!');
-  this.guessRange.remove();
+  this.guessRange.empty();
 };
 
 View.prototype.enterValidNum = function () {
@@ -152,8 +150,9 @@ Controller.prototype.guessEntered = function (userGuess) {
 };
 
 Controller.prototype.restartGame = function () {
-  this.model.resetGame();
   this.view.reset();
+  this.model.resetGame();
+  this.model.generateRandomNum(this.view.onLoad());
 };
 
 $(document).ready(function () {
@@ -181,16 +180,3 @@ $(document).ready(function () {
 // //    $('#relative-feedback').text('No change');
 // //  }
 // //}
-
-
-// // STARTS THE GAME
-// newGame();
-
-// // WAITS FOR NEW GAME TO BE CLICKED TO RESET THE GAME
-// $('.new').click(function () {
-//   // completely resets the game
-//   guessCount = 0;
-//   newGame();
-// });
-
-// });
