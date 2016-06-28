@@ -1,15 +1,61 @@
+/*------------------ MODEL ------------------*/
+var Model = function () {
+  this.maxNumber;
+  this.randomNum;
+  this.guessCount = 0;
+  this.prevUserGuess = 0;
+  this.prevDiff;
+};
+
+Model.prototype.generateRandomNum = function (maxNum) { // maxNum would come from View
+  this.randomNum = Math.floor((Math.random() * maxNum) + 1);
+};
+
+Model.prototype.resetGame = function () {
+  this.guessCount = 0;
+  this.prevUserGuess = 0;
+};
+
+Model.prototype.getCurrentDiff = function (userGuess) {
+  return Math.abs(userGuess - this.randomNum);
+};
+
+Model.prototype.getPrevDiff = function () {
+
+};
+
+// REST IS VIEW
+function generateRandomNum() {
+  // prompts for a ceiling number
+  while (true) { // VIEW
+    input = parseInt(prompt('Pick a number, any number!'))
+    if (input > 1) {
+      break;
+    }
+  }
+
+
+  // adds a header telling them the range --- VIEW
+  $('header').append('<h3 id="guessRange">Guess a number between 1 and ' + input);
+
+  // adds the ceiling number to the instructions html
+  $('#maxNum').text(input); // VIEW
+  return number;
+}
+
+
 $(document).ready(function () {
-  /*------------------ VARIABLES ------------------*/
-  var input;
-  var randomNum;
-  var guessCount = 0;
-  var prevUserGuess = 0;
+  //  /*------------------ VARIABLES ------------------*/
+  //  var maxNumber;
+  //  var randomNum;
+  //  var guessCount = 0;
+  //  var prevUserGuess = 0;
 
   /*------------------ FUNCTIONS ------------------*/
 
   // STARTS A BRAND NEW GAME
   function newGame() {
-    randomNum = generateRandomNum();
+    randomNum = generateRandomNum(); // model
     $('#guessList').empty();
     $('#count').text(guessCount);
     $('#userGuess').val('');
@@ -19,25 +65,7 @@ $(document).ready(function () {
   }
 
   // GENERATES A RANDOM NUMBER FROM 1 TO USER INPUT
-  function generateRandomNum() {
-    // prompts for a ceiling number
-    while (true) {
-      input = parseInt(prompt('Pick a number, any number!'))
-      if (input > 1) {
-        break;
-      }
-    }
 
-    // generates random number from 1 to input
-    var number = Math.floor((Math.random() * input) + 1);
-
-    // adds a header telling them the range
-    $('header').append('<h3 id="guessRange">Guess a number between 1 and ' + input);
-
-    // adds the ceiling number to the instructions html
-    $('#maxNum').text(input);
-    return number;
-  }
 
   // ADDS LIST ELEMENTS TO #GUESSLIST
   function guessList(user) {
@@ -46,8 +74,11 @@ $(document).ready(function () {
 
   // COMPARES NUMBER TO GENERATED NUMBER AND GIVES FEEDBACK
   function compareNumFirst(user, random) {
+    //MODEL
     var difference = Math.abs(user - random);
     // determines how hot/cold the number is
+
+    //VIEW
     if (difference >= 50) {
       $('#feedback').text('Ice Cold!');
     } else if (difference >= 30) {
